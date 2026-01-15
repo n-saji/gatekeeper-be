@@ -4,6 +4,7 @@ const {
   handleCreateUser,
   handleMe,
   handleUserDeletion,
+  handleUserUpdation,
 } = require("../controllers/userController");
 
 const router = express.Router();
@@ -12,7 +13,8 @@ router
   .route("/")
   .get(handleMe)
   .post(handleCreateUser)
-  .delete(handleUserDeletion);
+  .delete(handleUserDeletion)
+  .patch(handleUserUpdation);
 
 router.route("/all").get(handleGetUsers);
 

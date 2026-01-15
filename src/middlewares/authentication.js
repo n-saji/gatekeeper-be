@@ -1,5 +1,6 @@
 const { verifyJWTTokenAndExtractUserId } = require("../utils/token");
 const { getSession } = require("../config/redis");
+const User = require("../models/User");
 
 async function authenticationMiddleware(req, res, next) {
   try {
@@ -38,6 +39,21 @@ async function authenticationMiddleware(req, res, next) {
   }
 }
 
+async function adminAuthorizationMiddleware(req, res, next) {
+  try {
+    User.findById(req.userId).then((user) => {
+      if (!user || !user.role || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      next();
+    });
+  } catch (error) {
+    console.error("Error in admin authorization middleware:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 module.exports = {
   authenticationMiddleware,
+  adminAuthorizationMiddleware,
 };

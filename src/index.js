@@ -5,7 +5,10 @@ const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const cookieParser = require("cookie-parser");
-const { authenticationMiddleware } = require("./middlewares/authentication");
+const {
+  authenticationMiddleware,
+  adminAuthorizationMiddleware,
+} = require("./middlewares/authentication");
 const { connectRedis } = require("./config/redis");
 const { connectPublisherSubscriber } = require("./config/serverEvents");
 
@@ -29,7 +32,7 @@ app.use(authenticationMiddleware);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminAuthorizationMiddleware, adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome from Gatekeeper Server!");

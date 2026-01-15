@@ -3,7 +3,7 @@ const redis = require("redis");
 let redisClient;
 
 const connectRedis = async () => {
-  if (redisClient) return;
+  if (redisClient?.isOpen) return;
   redisClient = redis.createClient({
     username: process.env.REDIS_USERNAME,
     password: process.env.REDIS_PASSWORD,
@@ -17,7 +17,7 @@ const connectRedis = async () => {
     console.error("Redis Client Error", err);
   });
 
-  redisClient.connect().then(() => {
+  await redisClient.connect().then(() => {
     console.log("Connected to Redis");
   });
 
@@ -31,13 +31,14 @@ const setSession = async (userId, jti, ip, userAgent) => {
     userAgent: userAgent,
     lastSeen: new Date().toISOString(),
   });
+
+  await connectRedis();
+
   try {
-    if (!redisClient || !redisClient.isOpen) {
-      await connectRedis();
-    }
     await redisClient.set(sessionKey, sessionData, {
       EX: 60 * 15,
     });
+    await redisClient.sAdd(`user:${userId}:sessions`, jti);
 
     return true;
   } catch (error) {
@@ -48,12 +49,16 @@ const setSession = async (userId, jti, ip, userAgent) => {
 
 const getSession = async (userId, jti) => {
   const sessionKey = `session:${userId}:${jti}`;
+  await connectRedis();
+
   try {
-    if (!redisClient || !redisClient.isOpen) {
-      await connectRedis();
+    const data = await redisClient.get(sessionKey);
+    if (!data) {
+      await redisClient.sRem(`user:${userId}:sessions`, jti);
+      return null;
     }
-    const sessionData = await redisClient.get(sessionKey);
-    return sessionData ? JSON.parse(sessionData) : null;
+
+    return JSON.parse(data);
   } catch (error) {
     console.error("Error getting session from Redis:", error);
     throw error;
@@ -61,27 +66,28 @@ const getSession = async (userId, jti) => {
 };
 
 const deleteSession = async (userId) => {
-  const sessionKey = `session:${userId}:*`;
+  if (!userId) return false;
+  await connectRedis();
+  const sessionSetKey = `user:${userId}:sessions`;
+
   try {
-    if (!redisClient || !redisClient.isOpen) {
-      await connectRedis();
-    }
-    const keys = await redisClient.keys(sessionKey);
-    for (let key of keys) {
-      await redisClient.del(key);
-    }
+    const jtis = await redisClient.sMembers(sessionSetKey);
+    if (jtis.length === 0) return false;
+    const keys = jtis.map((jti) => `session:${userId}:${jti}`);
+
+    await redisClient.del(...keys);
+    await redisClient.del(sessionSetKey);
+
     return true;
   } catch (error) {
     console.error("Error deleting session from Redis:", error);
     throw error;
   }
 };
-
 const getAllActiveSessions = async () => {
+  await connectRedis();
+
   try {
-    if (!redisClient || !redisClient.isOpen) {
-      await connectRedis();
-    }
     const keys = await redisClient.keys("session:*");
     const sessions = [];
     for (let key of keys) {

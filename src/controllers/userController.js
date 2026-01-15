@@ -63,9 +63,27 @@ const handleUserDeletion = async (req, res) => {
   res.status(204).json({ message: "User deleted successfully" });
 };
 
+const handleUserUpdation = async (req, res) => {
+  const { first_name, last_name, email, password } = req.body;
+  try {
+    const updatedFields = {};
+    if (first_name) updatedFields.first_name = first_name;
+    if (last_name) updatedFields.last_name = last_name;
+    if (email) updatedFields.email = email;
+    if (password) updatedFields.password = password;
+    await User.findByIdAndUpdate(req.userId, updatedFields);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error updating user", error: error.message });
+  }
+  res.status(200).json({ message: "User updated successfully" });
+};
+
 module.exports = {
   handleGetUsers,
   handleCreateUser,
   handleMe,
   handleUserDeletion,
+  handleUserUpdation,
 };

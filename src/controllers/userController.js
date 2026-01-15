@@ -37,7 +37,7 @@ const handleCreateUser = async (req, res) => {
   res.json({ message: "User created successfully" });
 };
 
-const handleMe = async (req, res) => {
+const handleGetMe = async (req, res) => {
   const userModel = await User.findById(req.userId);
   if (!userModel) return res.status(404).json({ message: "User not found" });
   res.status(200).json(userModel);
@@ -83,7 +83,7 @@ const handleUserUpdation = async (req, res) => {
 module.exports = {
   handleGetUsers,
   handleCreateUser,
-  handleMe,
+  handleGetMe,
   handleUserDeletion,
   handleUserUpdation,
 };

@@ -2,7 +2,7 @@ const express = require("express");
 const {
   handleGetUsers,
   handleCreateUser,
-  handleMe,
+  handleGetMe,
   handleUserDeletion,
   handleUserUpdation,
 } = require("../controllers/userController");
@@ -11,7 +11,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(handleMe)
+  .get(handleGetMe)
   .post(handleCreateUser)
   .delete(handleUserDeletion)
   .patch(handleUserUpdation);

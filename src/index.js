@@ -24,6 +24,12 @@ app.get("/health", (req, res) => {
 });
 
 // Middleware
+app.use(require("cors")(
+  {
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  }
+));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());

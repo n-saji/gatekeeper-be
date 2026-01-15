@@ -9,11 +9,17 @@ const connectPublisherSubscriber = async () => {
     await connectRedis();
   }
   publisher = redisClient.duplicate();
-  publisher.on("error", (err) => console.error(err));
+  publisher.on("error", (err) => {
+    console.error(err);
+    process.exit(1);
+  });
   await publisher.connect();
 
   subscriber = redisClient.duplicate();
-  subscriber.on("error", (err) => console.error(err));
+  subscriber.on("error", (err) => {
+    console.error(err);
+    process.exit(1);
+  });
   await subscriber.connect();
 
   await subscriber.subscribe("force-logout", async (message) => {
